@@ -1,0 +1,42 @@
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion } = require('mongodb');
+dotenv.config();
+
+const PORT = process.env.PORT;
+const uri = process.env.MONGO_URI
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function run() {
+  try {
+    await client.connect();
+    
+    
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
+  }
+}
+run().catch(console.dir);
+
+app.get("/", (req, res)=>{
+    res.send("App is running")
+})
+
+app.listen(PORT, ()=>{
+    console.log(`App is running in port ${PORT}`)
+});
