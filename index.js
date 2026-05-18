@@ -1,11 +1,11 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require("mongodb");
 dotenv.config();
 
 const PORT = process.env.PORT;
-const uri = process.env.MONGO_URI
+const uri = process.env.MONGO_URI;
 
 const app = express();
 
@@ -17,15 +17,25 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
   try {
     await client.connect();
-    
-    
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+    const db = client.db("study-nook");
+    const roomsCollection = db.collection("rooms");
+
+    app.post("/rooms", async (req, res) => {
+      const roomData = req.body;
+      const result = await roomsCollection.insertOne(roomData);
+      res.json(result);
+    });
+
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -33,10 +43,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.get("/", (req, res)=>{
-    res.send("App is running")
-})
+app.get("/", (req, res) => {
+  res.send("App is running");
+});
 
-app.listen(PORT, ()=>{
-    console.log(`App is running in port ${PORT}`)
+app.listen(PORT, () => {
+  console.log(`App is running in port ${PORT}`);
 });
