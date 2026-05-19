@@ -29,7 +29,17 @@ async function run() {
 
     app.get("/rooms", async (req, res) => {
       const result = await roomsCollection.find().toArray();
-      res.json(result)
+      res.json(result);
+    });
+
+    app.get("/rooms/latest", async (req, res) => {
+      const result = await roomsCollection
+        .find()
+        .sort({ _id: -1 })
+        .limit(6)
+        .toArray();
+
+      res.json(result);
     });
 
     app.post("/rooms", async (req, res) => {
