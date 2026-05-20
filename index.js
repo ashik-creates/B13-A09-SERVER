@@ -51,8 +51,21 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/my-listings/:userId", async (req, res) => {
+      const { userId } = req.params;
+
+      const result = await roomsCollection
+        .find({
+          ownerId: userId,
+        })
+        .toArray();
+
+      res.json(result);
+    });
+
     app.post("/rooms", async (req, res) => {
       const roomData = req.body;
+
       const result = await roomsCollection.insertOne(roomData);
       res.json(result);
     });
