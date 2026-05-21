@@ -26,6 +26,7 @@ async function run() {
 
     const db = client.db("study-nook");
     const roomsCollection = db.collection("rooms");
+    const bookingsCollection = db.collection("bookings");
 
     app.get("/rooms", async (req, res) => {
       const result = await roomsCollection.find().toArray();
@@ -59,6 +60,38 @@ async function run() {
           ownerId: userId,
         })
         .toArray();
+
+      res.json(result);
+    });
+
+    app.post("/booking", async (req, res) => {
+      const bookingData = req.body;
+      const { roomId, bookingDate, startTime, endTime } = bookingData;
+
+      const alreadyBooked = await bookingsCollection.findOne({
+        roomId: roomId,
+        status: "confirmed",
+        bookingDate: bookingDate,
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
+      });
+
+      if (alreadyBooked) {
+        return res.json({ error: "Already booked in this time slots" });
+      }
+
+      await roomsCollection.updateOne(
+        {
+          _id: new ObjectId(roomId),
+        },
+        {
+          $inc: {
+            bookingCount: 1,
+          },
+        },
+      );
+
+      const result = await bookingsCollection.insertOne(bookingData);
 
       res.json(result);
     });
