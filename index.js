@@ -28,12 +28,12 @@ async function run() {
     const roomsCollection = db.collection("rooms");
     const bookingsCollection = db.collection("bookings");
 
-    app.get("/rooms", async (req, res) => {
+    app.get("/api/rooms", async (req, res) => {
       const result = await roomsCollection.find().toArray();
       res.json(result);
     });
 
-    app.get("/rooms/latest", async (req, res) => {
+    app.get("/api/rooms/latest", async (req, res) => {
       const result = await roomsCollection
         .find()
         .sort({ _id: -1 })
@@ -43,7 +43,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/rooms/:id", async (req, res) => {
+    app.get("/api/rooms/:id", async (req, res) => {
       const { id } = req.params;
       const result = await roomsCollection.findOne({
         _id: new ObjectId(id),
@@ -52,7 +52,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/my-listings/:userId", async (req, res) => {
+    app.get("/api/my-listings/:userId", async (req, res) => {
       const { userId } = req.params;
 
       const result = await roomsCollection
@@ -64,7 +64,7 @@ async function run() {
       res.json(result);
     });
 
-    app.post("/booking", async (req, res) => {
+    app.post("/api/booking", async (req, res) => {
       const bookingData = req.body;
       const { roomId, bookingDate, startTime, endTime } = bookingData;
 
@@ -96,7 +96,35 @@ async function run() {
       res.json(result);
     });
 
-    app.post("/rooms", async (req, res) => {
+    app.get("/api/my-bookings/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingsCollection
+        .find({
+          userId: userId,
+        })
+        .toArray();
+      res.json(result);
+    });
+
+    app.patch("/api/bookings/:id/cancel", async (req, res) => {
+      const { id } = req.params;
+      const { userId } = req.body;
+      const result = await bookingsCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+          userId: userId,
+        },
+        {
+          $set: {
+            status: "canceled"
+          }
+        },
+      );
+
+      res.json(result)
+    });
+
+    app.post("/api/rooms", async (req, res) => {
       const roomData = req.body;
 
       const result = await roomsCollection.insertOne(roomData);
