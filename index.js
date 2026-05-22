@@ -29,7 +29,31 @@ async function run() {
     const bookingsCollection = db.collection("bookings");
 
     app.get("/api/rooms", async (req, res) => {
-      const result = await roomsCollection.find().toArray();
+      const { search, amenities, min, max } = req.query;
+
+      let queries = {};
+
+      if (search && search !== "undefined") {
+        queries.roomName = { $regex: search, $options: "i" };
+      }
+
+      if (amenities && amenities !== "undefined") {
+        queries.amenities = { $all: amenities.split(",") };
+      }
+
+      if ((min && min !== "undefined") || (max && max !== "undefined")) {
+        queries.hourlyRate = {};
+
+        if (min) {
+          queries.hourlyRate.$gt = min;
+        }
+
+        if (max) {
+          queries.hourlyRate.$lt = max;
+        }
+      }
+
+      const result = await roomsCollection.find(queries).toArray();
       res.json(result);
     });
 
@@ -116,12 +140,12 @@ async function run() {
         },
         {
           $set: {
-            status: "canceled"
-          }
+            status: "canceled",
+          },
         },
       );
 
-      res.json(result)
+      res.json(result);
     });
 
     app.post("/api/rooms", async (req, res) => {
