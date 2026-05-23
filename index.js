@@ -37,6 +37,7 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload)
     req.user = payload;
     next();
   } catch (error) {
@@ -154,9 +155,10 @@ async function run() {
       res.json(result);
     });
 
-    app.patch("/api/bookings/:id/cancel", async (req, res) => {
+    app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const { userId } = req.body;
+      const  userId = req.user.id;
+
       const result = await bookingsCollection.updateOne(
         {
           _id: new ObjectId(id),
