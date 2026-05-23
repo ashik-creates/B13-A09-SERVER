@@ -37,7 +37,6 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const { payload } = await jwtVerify(token, JWKS);
-    console.log(payload)
     req.user = payload;
     next();
   } catch (error) {
@@ -157,7 +156,7 @@ async function run() {
 
     app.patch("/api/bookings/:id/cancel", verifyToken, async (req, res) => {
       const { id } = req.params;
-      const  userId = req.user.id;
+      const userId = req.user?.id;
 
       const result = await bookingsCollection.updateOne(
         {
@@ -169,6 +168,53 @@ async function run() {
             status: "canceled",
           },
         },
+      );
+
+      const booking = await bookingsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      await roomsCollection.updateOne(
+        {
+          _id: new ObjectId(booking.roomId),
+        },
+        {
+          $inc: {
+            bookingCount: -1,
+          },
+        },
+      );
+
+      res.json(result);
+    });
+
+    app.patch("/api/rooms/:id/edit", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const updatedData = req.body;
+
+      const result = await roomsCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+          ownerId: userId,
+        },
+        {
+          $set: updatedData,
+        },
+      );
+
+      res.json(result);
+    });
+
+    app.delete("/api/rooms/:id/delete", verifyToken, async (req, res) => {
+      const { id } = req.params;
+      const userId = req.user?.id;
+
+      const result = await roomsCollection.deleteOne(
+        {
+          _id: new ObjectId(id),
+          ownerId: userId,
+        }
       );
 
       res.json(result);
