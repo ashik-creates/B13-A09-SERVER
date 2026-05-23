@@ -77,7 +77,7 @@ async function run() {
         }
       }
 
-      const result = await roomsCollection.find(queries).toArray();
+      const result = await roomsCollection.find(queries).sort({ _id: -1 }).toArray();
       res.json(result);
     });
 
@@ -100,19 +100,19 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/api/my-listings/:userId", async (req, res) => {
+    app.get("/api/my-listings/:userId",verifyToken, async (req, res) => {
       const { userId } = req.params;
 
       const result = await roomsCollection
         .find({
           ownerId: userId,
         })
-        .toArray();
+        .sort({ _id: -1 }).toArray();
 
       res.json(result);
     });
 
-    app.post("/api/booking", async (req, res) => {
+    app.post("/api/booking",verifyToken, async (req, res) => {
       const bookingData = req.body;
       const { roomId, bookingDate, startTime, endTime } = bookingData;
 
@@ -144,12 +144,13 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/api/my-bookings/:userId", async (req, res) => {
+    app.get("/api/my-bookings/:userId",verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingsCollection
         .find({
           userId: userId,
         })
+        .sort({ _id: -1 })
         .toArray();
       res.json(result);
     });
@@ -210,17 +211,19 @@ async function run() {
       const { id } = req.params;
       const userId = req.user?.id;
 
-      const result = await roomsCollection.deleteOne(
-        {
-          _id: new ObjectId(id),
-          ownerId: userId,
-        }
-      );
+      const result = await roomsCollection.deleteOne({
+        _id: new ObjectId(id),
+        ownerId: userId,
+      });
+
+      await bookingsCollection.deleteMany({
+        roomId: id,
+      });
 
       res.json(result);
     });
 
-    app.post("/api/rooms", async (req, res) => {
+    app.post("/api/rooms", verifyToken, async (req, res) => {
       const roomData = req.body;
 
       const result = await roomsCollection.insertOne(roomData);
