@@ -167,6 +167,7 @@ async function run() {
         {
           _id: new ObjectId(id),
           userId: userId,
+          status: "confirmed",
         },
         {
           $set: {
