@@ -46,7 +46,7 @@ const verifyToken = async (req, res, next) => {
 
 async function run() {
   try {
-    // await client.connect();
+    await client.connect();
 
     const db = client.db("study-nook");
     const roomsCollection = db.collection("rooms");
@@ -77,7 +77,10 @@ async function run() {
         }
       }
 
-      const result = await roomsCollection.find(queries).sort({ _id: -1 }).toArray();
+      const result = await roomsCollection
+        .find(queries)
+        .sort({ _id: -1 })
+        .toArray();
       res.json(result);
     });
 
@@ -100,19 +103,20 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/api/my-listings/:userId",verifyToken, async (req, res) => {
+    app.get("/api/my-listings/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
 
       const result = await roomsCollection
         .find({
           ownerId: userId,
         })
-        .sort({ _id: -1 }).toArray();
+        .sort({ _id: -1 })
+        .toArray();
 
       res.json(result);
     });
 
-    app.post("/api/booking",verifyToken, async (req, res) => {
+    app.post("/api/booking", verifyToken, async (req, res) => {
       const bookingData = req.body;
       const { roomId, bookingDate, startTime, endTime } = bookingData;
 
@@ -144,7 +148,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/api/my-bookings/:userId",verifyToken, async (req, res) => {
+    app.get("/api/my-bookings/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingsCollection
         .find({
@@ -170,6 +174,10 @@ async function run() {
           },
         },
       );
+
+      if (result.modifiedCount === 0) {
+        return res.json({ error: "Booking not found or already canceled" });
+      }
 
       const booking = await bookingsCollection.findOne({
         _id: new ObjectId(id),
